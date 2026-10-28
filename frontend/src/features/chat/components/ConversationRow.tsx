@@ -1,11 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Button, Dropdown, type MenuProps } from 'antd';
+import { DeleteOutlined, EditOutlined, MessageOutlined, MoreOutlined } from '@ant-design/icons';
 import { formatRelativeTime } from '../../../utils/format';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { RenameDialog } from '../../../components/RenameDialog';
-import { useConversationStore } from '../../../stores/conversationStore';
-import { toast } from '../../../stores/toastStore';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import {
+  removeConversation,
+  renameConversation,
+  startNewChat,
+} from '../../../store/slices/conversationsSlice';
 import type { ConversationSummary } from '../../../types';
 
 interface ConversationRowProps {
@@ -15,37 +20,36 @@ interface ConversationRowProps {
 }
 
 export function ConversationRow({ conversation, active, onOpen }: ConversationRowProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const rename = useConversationStore((state) => state.rename);
-  const remove = useConversationStore((state) => state.remove);
-  const startNewChat = useConversationStore((state) => state.startNewChat);
-  const activeId = useConversationStore((state) => state.activeId);
+  const dispatch = useAppDispatch();
+  const activeId = useAppSelector((state) => state.conversations.activeId);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (event: MouseEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [menuOpen]);
+  const menu: MenuProps = {
+    items: [
+      { key: 'rename', icon: <EditOutlined />, label: '重命名' },
+      { type: 'divider' },
+      { key: 'delete', danger: true, icon: <DeleteOutlined />, label: '删除' },
+    ],
+    onClick: ({ key }) => {
+      if (key === 'rename') setRenameOpen(true);
+      if (key === 'delete') setDeleteOpen(true);
+    },
+  };
 
   const deleteConversation = async () => {
     setDeleting(true);
     try {
-      await remove(conversation.id);
+      await dispatch(removeConversation(conversation.id)).unwrap();
       setDeleteOpen(false);
       if (activeId === conversation.id) {
-        startNewChat();
+        dispatch(startNewChat());
         navigate('/chat', { replace: true });
       }
-    } catch (error) {
-      toast(error instanceof Error ? error.message : '删除失败', 'error');
+    } catch {
+      // The thunk already surfaced a message.
     } finally {
       setDeleting(false);
     }
@@ -55,7 +59,7 @@ export function ConversationRow({ conversation, active, onOpen }: ConversationRo
     <>
       <div className={`conv ${active ? 'active' : ''}`}>
         <button type="button" className="conv-open" onClick={() => onOpen(conversation)}>
-          <MessageSquare className="conv-icon" size={13} />
+          <MessageOutlined className="conv-icon" />
           <span className="conv-body">
             <span className="conv-title">{conversation.title}</span>
             <span className="conv-time">
@@ -65,51 +69,25 @@ export function ConversationRow({ conversation, active, onOpen }: ConversationRo
             </span>
           </span>
         </button>
-        <div className="conv-menu-wrap" ref={menuRef}>
-          <button
-            type="button"
+        <Dropdown menu={menu} trigger={['click']} placement="bottomRight">
+          <Button
+            type="text"
+            size="small"
             className="conv-more"
+            icon={<MoreOutlined />}
             aria-label="会话操作"
-            onClick={(event) => {
-              event.stopPropagation();
-              setMenuOpen((value) => !value);
-            }}
-          >
-            <MoreHorizontal size={14} />
-          </button>
-          {menuOpen && (
-            <div className="conv-menu">
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setMenuOpen(false);
-                  setRenameOpen(true);
-                }}
-              >
-                <Pencil size={12} /> 重命名
-              </button>
-              <button
-                type="button"
-                className="danger"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setMenuOpen(false);
-                  setDeleteOpen(true);
-                }}
-              >
-                <Trash2 size={12} /> 删除
-              </button>
-            </div>
-          )}
-        </div>
+            onClick={(event) => event.stopPropagation()}
+          />
+        </Dropdown>
       </div>
 
       <RenameDialog
         open={renameOpen}
         initialValue={conversation.title}
         onClose={() => setRenameOpen(false)}
-        onConfirm={(title) => rename(conversation.id, title)}
+        onConfirm={async (title) => {
+          await dispatch(renameConversation({ id: conversation.id, title })).unwrap();
+        }}
       />
       <ConfirmDialog
         open={deleteOpen}

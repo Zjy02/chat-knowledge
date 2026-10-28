@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { conversationsApi, knowledgeApi, streamChat } from '../../api';
+import { conversationsApi, streamChat } from '../../api';
 import { ApiError } from '../../api/client';
 import { CitationModal } from '../../components/CitationModal';
-import { useConversationStore } from '../../stores/conversationStore';
-import { useKnowledgeStore } from '../../stores/knowledgeStore';
-import { useToastStore } from '../../stores/toastStore';
+import { notify } from '../../store/notify';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { loadConversations, setActive, upsert } from '../../store/slices/conversationsSlice';
+import { refreshStats, uploadDocument } from '../../store/slices/knowledgeSlice';
 import { truncate } from '../../utils/format';
 import type { ChatStreamPayload, Citation, Message } from '../../types';
 import { ChatComposer } from './components/ChatComposer';
@@ -21,6 +22,7 @@ function nowIso() {
 export function ChatPage() {
   const { conversationId: routeParam } = useParams();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [messages, setMessages] = useState<Message[]>([]);
   const [title, setTitle] = useState('新对话');
   const [input, setInput] = useState('');
@@ -38,16 +40,11 @@ export function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastNewChatKey = useRef(0);
 
-  const loadConversations = useConversationStore((state) => state.load);
-  const setActive = useConversationStore((state) => state.setActive);
-  const upsert = useConversationStore((state) => state.upsert);
-  const newChatKey = useConversationStore((state) => state.newChatKey);
-  const stats = useKnowledgeStore((state) => state.stats);
-  const refreshStats = useKnowledgeStore((state) => state.refreshStats);
-  const pushToast = useToastStore((state) => state.push);
+  const newChatKey = useAppSelector((state) => state.conversations.newChatKey);
+  const stats = useAppSelector((state) => state.knowledge.stats);
 
-  // Cancels any in-flight stream and clears the working state. Incrementing the
-  // run id prevents late SSE callbacks from writing into the next conversation.
+  // Cancels any in-flight stream and clears working state. Incrementing the run
+  // id prevents late SSE callbacks from writing into the next conversation.
   const resetChat = useCallback(() => {
     runIdRef.current += 1;
     abortRef.current?.abort();
@@ -59,9 +56,9 @@ export function ChatPage() {
     setStreaming(false);
     setLoading(false);
     setSelectedCitation(null);
-    setActive(null);
+    dispatch(setActive(null));
     autoScrollRef.current = true;
-  }, [setActive]);
+  }, [dispatch]);
 
   const loadConversation = useCallback(
     async (id: number) => {
@@ -76,7 +73,7 @@ export function ChatPage() {
       abortRef.current = null;
       setStreaming(false);
       conversationIdRef.current = id;
-      setActive(id);
+      dispatch(setActive(id));
       setLoading(true);
       setMessages([]);
       try {
@@ -87,9 +84,9 @@ export function ChatPage() {
         autoScrollRef.current = true;
       } catch (error) {
         if (error instanceof ApiError && error.status === 404) {
-          pushToast('会话不存在或已被删除', 'error');
+          notify.error('会话不存在或已被删除');
         } else {
-          pushToast(error instanceof Error ? error.message : '会话加载失败', 'error');
+          notify.error(error instanceof Error ? error.message : '会话加载失败');
         }
         resetChat();
         navigate('/chat', { replace: true });
@@ -97,13 +94,8 @@ export function ChatPage() {
         setLoading(false);
       }
     },
-    [navigate, pushToast, resetChat, setActive],
+    [dispatch, navigate, resetChat],
   );
-
-  useEffect(() => {
-    void loadConversations();
-    void refreshStats();
-  }, [loadConversations, refreshStats]);
 
   const routeId = routeParam ? Number(routeParam) : null;
   useEffect(() => {
@@ -138,8 +130,7 @@ export function ChatPage() {
   const lastAssistantId = lastAssistant?.id;
 
   // Shared by send and regenerate. `tempAssistantId` is replaced with the
-  // server id in onMeta; delta callbacks locate the streaming row by status so
-  // they keep working across that id swap.
+  // server id in onMeta; callbacks locate the streaming row by status.
   const executeStream = useCallback(
     async (payload: ChatStreamPayload, tempAssistantId: number, isNewConversation: boolean) => {
       const runId = ++runIdRef.current;
@@ -155,20 +146,22 @@ export function ChatPage() {
             onMeta: (meta) => {
               if (runId !== runIdRef.current) return;
               conversationIdRef.current = meta.conversation_id;
-              setActive(meta.conversation_id);
+              dispatch(setActive(meta.conversation_id));
               setTitle(meta.title);
               setModel(meta.model);
-              upsert({
-                id: meta.conversation_id,
-                title: meta.title,
-                ...(isNewConversation
-                  ? {
-                      message_count: 2,
-                      last_message_at: nowIso(),
-                      created_at: nowIso(),
-                    }
-                  : {}),
-              });
+              dispatch(
+                upsert({
+                  id: meta.conversation_id,
+                  title: meta.title,
+                  ...(isNewConversation
+                    ? {
+                        message_count: 2,
+                        last_message_at: nowIso(),
+                        created_at: nowIso(),
+                      }
+                    : {}),
+                }),
+              );
               setMessages((previous) =>
                 previous.map((item) =>
                   item.id === tempAssistantId ? { ...item, id: meta.assistant_message_id } : item,
@@ -214,7 +207,7 @@ export function ChatPage() {
                     : item,
                 ),
               );
-              pushToast(message, 'error');
+              notify.error(message);
             },
           },
           controller.signal,
@@ -238,18 +231,18 @@ export function ChatPage() {
                 : item,
             ),
           );
-          pushToast(message, 'error');
+          notify.error(message);
         }
       } finally {
         if (runId === runIdRef.current) {
           setStreaming(false);
           abortRef.current = null;
-          void loadConversations();
-          void refreshStats();
+          void dispatch(loadConversations());
+          void dispatch(refreshStats());
         }
       }
     },
-    [loadConversations, navigate, pushToast, refreshStats, setActive, upsert],
+    [dispatch, navigate],
   );
 
   const sendMessage = useCallback(
@@ -257,7 +250,7 @@ export function ChatPage() {
       const content = (raw ?? input).trim();
       if (!content || streaming) return;
       if (content.length > 2000) {
-        pushToast('问题不能超过 2000 字', 'error');
+        notify.error('问题不能超过 2000 字');
         return;
       }
       const timestamp = nowIso();
@@ -296,7 +289,7 @@ export function ChatPage() {
         isNewConversation,
       );
     },
-    [executeStream, input, pushToast, streaming, useKnowledge],
+    [executeStream, input, streaming, useKnowledge],
   );
 
   const regenerate = useCallback(() => {
@@ -333,19 +326,13 @@ export function ChatPage() {
   const toggleKnowledge = useCallback(() => {
     const next = !useKnowledge;
     setUseKnowledge(next);
-    pushToast(next ? '已开启知识库增强' : '已切换为通用对话', 'info');
-  }, [pushToast, useKnowledge]);
+    notify.info(next ? '已开启知识库增强' : '已切换为通用对话');
+  }, [useKnowledge]);
 
   const attach = async (file: File | undefined) => {
     if (!file) return;
-    pushToast('正在上传并解析资料…', 'info');
-    try {
-      await knowledgeApi.upload(file);
-      pushToast('已加入知识库解析队列', 'success');
-      void refreshStats();
-    } catch (error) {
-      pushToast(error instanceof Error ? error.message : '上传失败', 'error');
-    }
+    notify.info('正在上传并解析资料…');
+    await dispatch(uploadDocument(file));
   };
 
   const openCitation = (citation: Citation) => setSelectedCitation(citation);

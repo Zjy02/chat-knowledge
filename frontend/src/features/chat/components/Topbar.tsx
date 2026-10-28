@@ -1,6 +1,7 @@
-import { Check, Menu, MoreHorizontal, Sparkles } from 'lucide-react';
-import { useAuthStore } from '../../../stores/authStore';
-import { useUiStore } from '../../../stores/uiStore';
+import { Avatar, Button, Tag, Tooltip } from 'antd';
+import { CheckOutlined, MenuOutlined, MoreOutlined, StarOutlined } from '@ant-design/icons';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { toggleSidebar } from '../../../store/slices/uiSlice';
 import { initials } from '../../../utils/format';
 
 interface TopbarProps {
@@ -10,14 +11,18 @@ interface TopbarProps {
 }
 
 export function Topbar({ section, title, model = 'DeepSeek · chat' }: TopbarProps) {
-  const toggleSidebar = useUiStore((state) => state.toggleSidebar);
-  const user = useAuthStore((state) => state.user);
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
 
   return (
     <header className="topbar">
-      <button type="button" className="mobile-menu" onClick={toggleSidebar} aria-label="打开菜单">
-        <Menu size={18} />
-      </button>
+      <Button
+        className="mobile-menu"
+        type="text"
+        icon={<MenuOutlined />}
+        aria-label="打开菜单"
+        onClick={() => dispatch(toggleSidebar())}
+      />
       <div className="crumbs">
         <span>工作台</span>
         <span className="crumb-sep">/</span>
@@ -26,18 +31,19 @@ export function Topbar({ section, title, model = 'DeepSeek · chat' }: TopbarPro
       <div className="top-mid">
         <span className="top-title">{title}</span>
         <span className="save-state">
-          <Check size={11} /> 已同步
+          <CheckOutlined /> 已同步
         </span>
       </div>
       <div className="top-actions">
-        <div className="model-pill">
-          <Sparkles size={11} className="spark" />
+        <Tag className="model-pill" icon={<StarOutlined />}>
           {model}
-        </div>
-        <button type="button" className="icon-btn" aria-label="更多操作">
-          <MoreHorizontal size={16} />
-        </button>
-        <div className="top-avatar">{initials(user?.name || '知')}</div>
+        </Tag>
+        <Tooltip title="更多操作">
+          <Button type="text" shape="circle" icon={<MoreOutlined />} aria-label="更多操作" />
+        </Tooltip>
+        <Avatar className="top-avatar" size={30}>
+          {initials(user?.name || '知')}
+        </Avatar>
       </div>
     </header>
   );

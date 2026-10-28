@@ -4,8 +4,8 @@ import { AuthPage } from './features/auth/AuthPage';
 import { ChatPage } from './features/chat/ChatPage';
 import { KnowledgePage } from './features/knowledge/KnowledgePage';
 import { AppLayout } from './layouts/AppLayout';
-import { ToastViewport } from './components/ToastViewport';
-import { useAuthStore } from './stores/authStore';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import { bootstrapAuth, logout } from './store/slices/authSlice';
 
 function Splash() {
   return (
@@ -21,7 +21,7 @@ function Splash() {
 }
 
 function Protected() {
-  const status = useAuthStore((state) => state.status);
+  const status = useAppSelector((state) => state.auth.status);
   const location = useLocation();
   if (status === 'idle' || status === 'loading') return <Splash />;
   if (status !== 'authenticated') {
@@ -32,58 +32,57 @@ function Protected() {
 
 export default function App() {
   const [booted, setBooted] = useState(false);
-  const bootstrap = useAuthStore((state) => state.bootstrap);
-  const logout = useAuthStore((state) => state.logout);
-  const status = useAuthStore((state) => state.status);
+  const dispatch = useAppDispatch();
+  const status = useAppSelector((state) => state.auth.status);
+  const bootstrapped = useAppSelector((state) => state.auth.bootstrapped);
   const navigate = useNavigate();
 
   useEffect(() => {
-    void bootstrap().finally(() => setBooted(true));
-  }, [bootstrap]);
+    void dispatch(bootstrapAuth()).finally(() => setBooted(true));
+  }, [dispatch]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
-      logout();
+      void dispatch(logout());
       navigate('/login', { replace: true });
     };
     window.addEventListener('zhiwen:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('zhiwen:unauthorized', handleUnauthorized);
-  }, [logout, navigate]);
+  }, [dispatch, navigate]);
 
   // Show the splash only while the initial token check is running. A login
   // submit also sets `loading`, but that should keep the form visible.
-  if (!booted && (status === 'idle' || status === 'loading')) return <Splash />;
+  if (!booted && !bootstrapped && (status === 'idle' || status === 'loading')) {
+    return <Splash />;
+  }
 
   return (
-    <>
-      <Routes>
-        <Route
-          path="/login"
-          element={
-            status === 'authenticated' ? <Navigate to="/chat" replace /> : <AuthPage mode="login" />
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            status === 'authenticated' ? (
-              <Navigate to="/chat" replace />
-            ) : (
-              <AuthPage mode="register" />
-            )
-          }
-        />
-        <Route element={<Protected />}>
-          <Route path="/" element={<Navigate to="/chat" replace />} />
-          <Route path="/chat/:conversationId?" element={<ChatPage />} />
-          <Route path="/knowledge" element={<KnowledgePage />} />
-        </Route>
-        <Route
-          path="*"
-          element={<Navigate to={status === 'authenticated' ? '/chat' : '/login'} replace />}
-        />
-      </Routes>
-      <ToastViewport />
-    </>
+    <Routes>
+      <Route
+        path="/login"
+        element={
+          status === 'authenticated' ? <Navigate to="/chat" replace /> : <AuthPage mode="login" />
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          status === 'authenticated' ? (
+            <Navigate to="/chat" replace />
+          ) : (
+            <AuthPage mode="register" />
+          )
+        }
+      />
+      <Route element={<Protected />}>
+        <Route path="/" element={<Navigate to="/chat" replace />} />
+        <Route path="/chat/:conversationId?" element={<ChatPage />} />
+        <Route path="/knowledge" element={<KnowledgePage />} />
+      </Route>
+      <Route
+        path="*"
+        element={<Navigate to={status === 'authenticated' ? '/chat' : '/login'} replace />}
+      />
+    </Routes>
   );
 }

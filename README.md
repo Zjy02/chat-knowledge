@@ -25,18 +25,18 @@
 
 ## 技术栈
 
-| 层       | 选型                                                                                  |
-| -------- | ------------------------------------------------------------------------------------- |
-| 前端     | React 18、TypeScript 5、Vite 5、React Router 6、Zustand、react-markdown、lucide-react |
-| 流式通信 | **SSE**（fetch + ReadableStream + AbortController）                                   |
-| 后端     | Python 3.12+、FastAPI、Pydantic v2、SQLAlchemy 2 async                                |
-| 数据库   | MySQL 8.4（utf8mb4），测试使用 SQLite                                                 |
-| 鉴权     | JWT HS256 + bcrypt                                                                    |
-| 检索     | jieba 中文分词 + BM25（可替换为混合检索）                                             |
-| 文档解析 | pypdf、python-docx、纯文本                                                            |
-| 测试     | pytest + httpx、Vitest + Testing Library、Playwright                                  |
-| 工程化   | Husky、lint-staged、ESLint、Prettier、Ruff、GitHub Actions                            |
-| 部署     | Docker Compose、Nginx、MySQL volume                                                   |
+| 层       | 选型                                                                                                      |
+| -------- | --------------------------------------------------------------------------------------------------------- |
+| 前端     | React 18、TypeScript 5、Vite 5、React Router 6、Redux Toolkit、Ant Design 5、react-markdown、lucide-react |
+| 流式通信 | **SSE**（fetch + ReadableStream + AbortController）                                                       |
+| 后端     | Python 3.12+、FastAPI、Pydantic v2、SQLAlchemy 2 async                                                    |
+| 数据库   | MySQL 8.4（utf8mb4），测试使用 SQLite                                                                     |
+| 鉴权     | JWT HS256 + bcrypt                                                                                        |
+| 检索     | jieba 中文分词 + BM25（可替换为混合检索）                                                                 |
+| 文档解析 | pypdf、python-docx、纯文本                                                                                |
+| 测试     | pytest + httpx、Vitest + Testing Library、Playwright                                                      |
+| 工程化   | Husky、lint-staged、ESLint、Prettier、Ruff、GitHub Actions                                                |
+| 部署     | Docker Compose、Nginx、MySQL volume                                                                       |
 
 ### 为什么是 SSE 而不是 WebSocket
 
@@ -128,7 +128,7 @@ chat-knowledge/
 │   │   ├── api/             # fetch client + SSE parser
 │   │   ├── components/      # Markdown, dialogs, toasts
 │   │   ├── features/        # auth / chat / knowledge
-│   │   ├── stores/          # Zustand
+│   │   ├── store/           # Redux Toolkit slices + typed hooks
 │   │   ├── styles/          # design tokens + responsive CSS
 │   │   └── types/
 │   ├── e2e/                 # Playwright main-flow regression
@@ -152,7 +152,7 @@ make check         # lint + typecheck + tests + production build
 | 检查                     | 结果                   |
 | ------------------------ | ---------------------- |
 | 后端 pytest              | 26 passed，覆盖率 87%  |
-| 前端 Vitest              | 13 passed              |
+| 前端 Vitest              | 16 passed              |
 | Playwright E2E           | 1 passed（完整主链路） |
 | Ruff / ESLint / Prettier | 全部通过               |
 | TypeScript / Vite build  | 通过                   |
@@ -164,6 +164,8 @@ make check         # lint + typecheck + tests + production build
 - **Husky**：提交前执行 `lint-staged`（ESLint + Prettier），推送前执行 TypeScript 类型检查。
 - **ESLint**：TypeScript + React Hooks + React Refresh 规则，`--max-warnings 0`。
 - **Prettier**：统一引号、分号、行宽；`npm run format:check` 纳入 CI。
+- **Redux Toolkit**：认证、会话、知识库和 UI 状态统一管理，异步请求使用 `createAsyncThunk`。
+- **Ant Design 5**：表单、弹窗、表格、上传、Switch、Dropdown、message 等交互组件；品牌样式通过 `ConfigProvider` 与 `styles/antd.css` 统一覆盖。
 - **Ruff**：Python lint，CI 与本地 `make lint` 均执行。
 - **注释原则**：解释「为什么」而不是重复代码；Python 侧重点注释异步会话、SSE 生命周期、检索归一化、后台解析与安全边界。
 

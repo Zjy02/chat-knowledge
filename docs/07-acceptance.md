@@ -79,6 +79,7 @@
 - [x] 上传大小/格式校验
 - [x] SSE 经 Nginx 不缓冲
 - [x] Docker Compose + Alembic + MySQL 健康检查
+- [x] Redux Toolkit 状态管理 + Ant Design 组件库迁移
 - [x] GitHub Actions：后端、前端、E2E 三个 job
 
 ## 4. 证据
@@ -93,9 +94,10 @@
 | 知识库 | `docs/prototype/screenshots/app-knowledge.png` |
 | 引用弹窗 | `docs/prototype/screenshots/app-citation.png` |
 | 上传弹窗 | `docs/prototype/screenshots/app-upload.png` |
-| 移动端 | `docs/prototype/screenshots/app-mobile.png` |
+| 移动端 · 对话 | `docs/prototype/screenshots/app-mobile.png` |
+| 移动端 · 知识库 | `docs/prototype/screenshots/app-knowledge-mobile.png` |
 | 后端测试 | `backend/tests/`，26 passed / 87% |
-| 前端测试 | `frontend/src/**/*.test.ts(x)`，13 passed |
+| 前端测试 | `frontend/src/**/*.test.ts(x)`，16 passed |
 | E2E | `frontend/e2e/core.spec.ts`，1 passed |
 
 ## 5. 尚未完成 / 需外部条件

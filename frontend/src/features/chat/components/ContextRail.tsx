@@ -1,4 +1,5 @@
 import { ArrowRight, BookOpen, Check, Link2, ShieldCheck } from 'lucide-react';
+import { Switch } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import type { Citation, KnowledgeStats } from '../../../types';
 
@@ -26,12 +27,11 @@ export function ContextRail({
           <span className="rail-title">
             <BookOpen size={13} /> 知识库增强
           </span>
-          <button
-            type="button"
-            className={`switch ${useKnowledge ? '' : 'off'}`}
-            onClick={onToggleKnowledge}
+          <Switch
+            size="small"
+            checked={useKnowledge}
+            onChange={onToggleKnowledge}
             aria-label={useKnowledge ? '关闭知识库增强' : '开启知识库增强'}
-            aria-pressed={useKnowledge}
           />
         </div>
         <div className="kb-status">

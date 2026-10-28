@@ -1,4 +1,5 @@
-import { ExternalLink, Quote } from 'lucide-react';
+import { Button, Tag } from 'antd';
+import { LinkOutlined, MessageOutlined } from '@ant-design/icons';
 import { Modal } from './Modal';
 import type { Citation } from '../types';
 
@@ -18,23 +19,23 @@ export function CitationModal({ citation, onClose }: CitationModalProps) {
       width={640}
       footer={
         <div className="modal-actions">
-          <button type="button" className="btn btn-primary" onClick={onClose}>
+          <Button type="primary" onClick={onClose}>
             知道了
-          </button>
+          </Button>
         </div>
       }
     >
       <div className="citation-source">
         <div className="citation-source-meta">
           <span>
-            <Quote size={13} /> 原文片段
+            <MessageOutlined /> 原文片段
           </span>
-          <span className="score-pill">{Math.round(citation.score * 100)}% 相关</span>
+          <Tag color="success">{Math.round(citation.score * 100)}% 相关</Tag>
         </div>
         <blockquote>{citation.content || citation.snippet}</blockquote>
         <div className="citation-source-foot">
           <span>
-            <ExternalLink size={12} /> 来自你的知识库
+            <LinkOutlined /> 来自你的知识库
           </span>
           <span>Chunk #{citation.chunk_index + 1}</span>
         </div>

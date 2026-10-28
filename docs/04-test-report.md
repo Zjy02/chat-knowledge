@@ -11,7 +11,7 @@
 | --- | --- | --- |
 | 后端单元 | pytest | 密码哈希、JWT、文档切分、文件校验、文本提取 |
 | 后端接口 | pytest + httpx ASGI | 注册/登录、鉴权、会话 CRUD、越权、上传、检索、SSE 事件、重新生成 |
-| 前端单元 | Vitest + Testing Library | UTC 时间格式化、Markdown 引用、XSS、SSE 分帧、Composer 键盘交互、空状态 |
+| 前端单元 | Vitest + Testing Library | Redux slices、UTC 时间格式化、Markdown 引用、XSS、SSE 分帧、Composer 键盘交互、空状态 |
 | E2E | Playwright | 注册 → 通用提问 → 上传 → 检索测试 → 知识库提问 → 引用弹窗 → 重命名 → 刷新回放 |
 | 静态质量 | Ruff / ESLint / Prettier / tsc | 未使用导入、Hooks 规则、格式、类型 |
 | 构建 | Vite | 生产产物构建 |
@@ -45,8 +45,8 @@ npm run e2e
 | ESLint | ✅ 通过 | 0 warnings（`--max-warnings 0`） |
 | Prettier | ✅ 通过 | `format:check` |
 | TypeScript | ✅ 通过 | `tsc -b` |
-| Vitest | ✅ 13 passed | 5 个测试文件 |
-| Vite build | ✅ 通过 | gzip 约 181 KB JS / 10 KB CSS |
+| Vitest | ✅ 16 passed | 7 个测试文件 |
+| Vite build | ✅ 通过 | 主入口 gzip 18.7 KB；antd/markdown/redux vendor 分包，总体约 484 KB gzip |
 | Playwright | ✅ 1 passed | 主链路约 6 秒（Mock Provider） |
 
 ### 3.1 后端覆盖率

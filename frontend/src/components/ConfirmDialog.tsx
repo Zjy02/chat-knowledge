@@ -1,3 +1,5 @@
+import { Button } from 'antd';
+import { WarningOutlined } from '@ant-design/icons';
 import { Modal } from './Modal';
 
 interface ConfirmDialogProps {
@@ -29,23 +31,18 @@ export function ConfirmDialog({
       description={description}
       width={420}
       footer={
-        <>
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={loading}>
+        <div className="modal-actions">
+          <Button onClick={onClose} disabled={loading}>
             取消
-          </button>
-          <button
-            type="button"
-            className={danger ? 'btn btn-danger' : 'btn btn-primary'}
-            onClick={onConfirm}
-            disabled={loading}
-          >
-            {loading ? '处理中…' : confirmText}
-          </button>
-        </>
+          </Button>
+          <Button type="primary" danger={danger} onClick={onConfirm} loading={loading}>
+            {confirmText}
+          </Button>
+        </div>
       }
     >
       <div className={`confirm-illustration ${danger ? 'danger' : ''}`}>
-        <span>{danger ? '!' : '?'}</span>
+        <WarningOutlined />
       </div>
     </Modal>
   );

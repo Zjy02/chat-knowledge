@@ -1,7 +1,8 @@
-import { ArrowUpRight, FlaskConical, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
+import { Button, Empty, Input, Tag } from 'antd';
+import { ArrowUpOutlined, ExperimentOutlined } from '@ant-design/icons';
 import { knowledgeApi } from '../../../api';
-import { toast } from '../../../stores/toastStore';
+import { notify } from '../../../store/notify';
 import type { SearchResponse } from '../../../types';
 
 interface RetrievalTestProps {
@@ -18,10 +19,9 @@ export function RetrievalTest({ disabled }: RetrievalTestProps) {
     if (!value || loading) return;
     setLoading(true);
     try {
-      const response = await knowledgeApi.search(value, 3);
-      setResult(response);
+      setResult(await knowledgeApi.search(value, 3));
     } catch (error) {
-      toast(error instanceof Error ? error.message : '检索失败', 'error');
+      notify.error(error instanceof Error ? error.message : '检索失败');
     } finally {
       setLoading(false);
     }
@@ -31,30 +31,31 @@ export function RetrievalTest({ disabled }: RetrievalTestProps) {
     <section className="panel test-panel">
       <div className="panel-head">
         <span className="panel-title">
-          <FlaskConical size={13} /> 检索测试
+          <ExperimentOutlined /> 检索测试
         </span>
         <span className="panel-hint">不消耗模型额度</span>
       </div>
       <div className="test-body">
         <p>输入一个问题，看看知识库会召回哪些片段。</p>
         <div className="test-input">
-          <input
+          <Input
+            variant="borderless"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') void run();
-            }}
+            onPressEnter={() => void run()}
             placeholder="例如：BM25 和向量怎么融合"
             disabled={disabled}
           />
-          <button
-            type="button"
+          <Button
+            type="primary"
+            shape="circle"
+            size="small"
+            icon={<ArrowUpOutlined />}
             onClick={run}
-            disabled={disabled || loading || !query.trim()}
+            loading={loading}
+            disabled={disabled || !query.trim()}
             aria-label="检索"
-          >
-            {loading ? <LoaderCircle size={12} className="spin" /> : <ArrowUpRight size={12} />}
-          </button>
+          />
         </div>
         <div className="test-result">
           {result ? (
@@ -63,7 +64,7 @@ export function RetrievalTest({ disabled }: RetrievalTestProps) {
                 <div key={hit.chunk_id} className="mini-hit">
                   <div className="mini-hit-top">
                     <b>{hit.document_name}</b>
-                    <span>{Math.round(hit.score * 100)}%</span>
+                    <Tag color="success">{Math.round(hit.score * 100)}%</Tag>
                   </div>
                   <p>{hit.snippet}</p>
                   <div className="mini-hit-foot">
@@ -72,11 +73,14 @@ export function RetrievalTest({ disabled }: RetrievalTestProps) {
                 </div>
               ))
             ) : (
-              <div className="test-empty">没有命中片段。尝试换一个更具体的关键词。</div>
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="没有命中片段，换个关键词试试"
+              />
             )
           ) : (
             <div className="test-empty">
-              {disabled ? '先上传一篇资料，再进行检索测试。' : '输入问题后点击右上角按钮。'}
+              {disabled ? '先上传一篇资料，再进行检索测试。' : '输入问题后点击右侧按钮。'}
             </div>
           )}
         </div>

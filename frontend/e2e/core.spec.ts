@@ -52,7 +52,7 @@ test('注册、提问、上传知识库并验证引用与重命名', async ({ pa
   // 5. 重命名当前会话
   await page.locator('.conv.active').hover();
   await page.locator('.conv.active .conv-more').click({ force: true });
-  await page.getByRole('button', { name: '重命名', exact: true }).click();
+  await page.getByRole('menuitem', { name: '重命名' }).click();
   const titleInput = page.getByLabel('会话标题');
   await titleInput.fill('E2E 引用验证');
   await page.getByRole('button', { name: '保存' }).click();

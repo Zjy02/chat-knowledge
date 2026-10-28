@@ -87,6 +87,39 @@ Python 侧重点解释：
 
 注释遵循「解释为什么」原则，不写 `i += 1 # increment i` 这类噪声。
 
+
+## 4A. 状态管理（Redux Toolkit）
+
+前端已从 Zustand 迁移到 **Redux Toolkit + React Redux**：
+
+```text
+src/store/
+├── index.ts                  # configureStore / RootState / AppDispatch
+├── hooks.ts                  # useAppDispatch / useAppSelector
+├── notify.ts                 # 供 thunk 调用的 AntD message 桥
+└── slices/
+    ├── authSlice.ts          # 登录、注册、bootstrap、logout
+    ├── conversationsSlice.ts # 列表、activeId、新建/重命名/删除
+    ├── knowledgeSlice.ts     # 文档、统计、上传/启停/删除、轮询
+    └── uiSlice.ts            # 移动端侧栏
+```
+
+约定：
+
+- 服务端数据与跨页面共享状态放 slice；输入框、当前筛选等页面局部状态留在组件；
+- 异步请求统一用 `createAsyncThunk`，错误通过 `rejectWithValue` 转成可展示文案；
+- 组件只通过 typed hooks 读写 store，不直接 import store；
+- Redux thunk 不能使用 React context，因此用 `AntdMessageBridge` 注册 AntD 的 `message` 实例；
+- 单测覆盖 `conversationsSlice` 的新建/置顶和 `knowledgeSlice` 的加载结果。
+
+## 4B. 组件库（Ant Design 5）
+
+- 入口使用 `ConfigProvider` 注入中文 locale 与品牌主题（`src/theme.ts`）；
+- `App` 组件包裹全局 message/notification 上下文；
+- 已迁移：Form、Input、Input.Password、Button、Modal、Dropdown、Menu、Table、Tag、Switch、Upload.Dragger、Progress、Alert、Empty、Segmented、Tooltip、Avatar、Statistic、Card；
+- 品牌层保留自有 CSS（纸感背景、宋体标题、朱砂强调色），AntD 负责交互、可访问性与状态反馈；
+- 自定义覆盖集中在 `src/styles/antd.css`，禁止在业务组件里散落 `!important`。
+
 ## 5. CI（GitHub Actions）
 
 `.github/workflows/ci.yml` 三个 job：
@@ -111,7 +144,7 @@ make seed          # 重建演示数据
 
 ## 7. 代码组织原则
 
-- 页面级组件只负责编排，网络请求放 `api/`，共享状态放 `stores/`；
+- 页面级组件只负责编排，网络请求放 `api/`，共享状态放 `store/`（Redux Toolkit slices）；
 - 组件超过约 500 行时评估抽离（ChatPage 已拆分 Composer/Message/ContextRail）；
 - 组件私有逻辑放同目录 `components/`，避免所有代码堆在入口文件；
 - 前端类型集中在 `src/types`，SSE 事件与 REST DTO 使用同一套类型；

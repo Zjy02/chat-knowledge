@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Button, Input } from 'antd';
 import { Modal } from './Modal';
 
 interface RenameDialogProps {
@@ -36,22 +37,22 @@ export function RenameDialog({ open, initialValue, onClose, onConfirm }: RenameD
       description="一个好标题更容易在历史记录中找到。"
       width={420}
       footer={
-        <>
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={saving}>
+        <div className="modal-actions">
+          <Button onClick={onClose} disabled={saving}>
             取消
-          </button>
-          <button type="button" className="btn btn-primary" onClick={submit} disabled={saving}>
-            {saving ? '保存中…' : '保存'}
-          </button>
-        </>
+          </Button>
+          <Button type="primary" onClick={submit} loading={saving}>
+            保存
+          </Button>
+        </div>
       }
     >
       <label className="field-label" htmlFor="rename-input">
         会话标题
       </label>
-      <input
+      <Input
         id="rename-input"
-        className="text-input"
+        size="large"
         autoFocus
         maxLength={120}
         value={value}

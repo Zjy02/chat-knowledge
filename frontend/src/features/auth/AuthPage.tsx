@@ -1,82 +1,70 @@
-import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Alert, Button, Form, Input } from 'antd';
 import {
-  ArrowRight,
-  BookOpen,
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  MessageSquare,
-  ShieldCheck,
-  Sparkles,
-  User,
-} from 'lucide-react';
+  ArrowRightOutlined,
+  BookOutlined,
+  ExperimentOutlined,
+  LockOutlined,
+  MailOutlined,
+  MessageOutlined,
+  SafetyCertificateOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { Logo } from '../../components/Logo';
-import { useAuthStore } from '../../stores/authStore';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { clearError, login, register } from '../../store/slices/authSlice';
 
 interface AuthPageProps {
   mode: 'login' | 'register';
 }
 
+interface AuthFormValues {
+  name?: string;
+  email: string;
+  password: string;
+}
+
 export function AuthPage({ mode }: AuthPageProps) {
   const navigate = useNavigate();
-  const login = useAuthStore((state) => state.login);
-  const register = useAuthStore((state) => state.register);
-  const clearError = useAuthStore((state) => state.clearError);
-  const status = useAuthStore((state) => state.status);
-  const user = useAuthStore((state) => state.user);
-  const error = useAuthStore((state) => state.error);
-
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [localError, setLocalError] = useState('');
+  const dispatch = useAppDispatch();
+  const [form] = Form.useForm<AuthFormValues>();
+  const status = useAppSelector((state) => state.auth.status);
+  const user = useAppSelector((state) => state.auth.user);
+  const error = useAppSelector((state) => state.auth.error);
+  const isLogin = mode === 'login';
+  const loading = status === 'loading';
 
   if (user && status === 'authenticated') {
     return <Navigate to="/chat" replace />;
   }
 
-  const isLogin = mode === 'login';
-  const loading = status === 'loading';
-
-  const submit = async (event?: FormEvent) => {
-    event?.preventDefault();
-    setLocalError('');
-    clearError();
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      setLocalError('请输入有效的邮箱地址');
-      return;
-    }
-    if (password.length < 8) {
-      setLocalError('密码至少 8 位');
-      return;
-    }
-    if (!isLogin && name.trim().length === 0) {
-      setLocalError('请填写你的昵称');
-      return;
-    }
+  const submit = async (values: AuthFormValues) => {
+    dispatch(clearError());
     try {
       if (isLogin) {
-        await login(normalizedEmail, password);
+        await dispatch(
+          login({ email: values.email.trim().toLowerCase(), password: values.password }),
+        ).unwrap();
       } else {
-        await register(normalizedEmail, password, name.trim());
+        await dispatch(
+          register({
+            email: values.email.trim().toLowerCase(),
+            password: values.password,
+            name: values.name?.trim() || '',
+          }),
+        ).unwrap();
       }
       navigate('/chat', { replace: true });
     } catch {
-      // The store exposes a friendly error message; keep the form mounted.
+      // The slice already exposes a user-facing error message.
     }
   };
 
   const demoLogin = async () => {
-    setLocalError('');
-    clearError();
-    setEmail('demo@zhiwen.app');
-    setPassword('Demo1234');
+    dispatch(clearError());
+    form.setFieldsValue({ email: 'demo@zhiwen.app', password: 'Demo1234' });
     try {
-      await login('demo@zhiwen.app', 'Demo1234');
+      await dispatch(login({ email: 'demo@zhiwen.app', password: 'Demo1234' })).unwrap();
       navigate('/chat', { replace: true });
     } catch {
       // Error is shown from the store.
@@ -89,9 +77,7 @@ export function AuthPage({ mode }: AuthPageProps) {
         <div className="auth-story-grid" aria-hidden="true" />
         <div className="auth-story-top">
           <Logo />
-          <span className="auth-badge">
-            <Sparkles size={11} /> KNOWLEDGE AI
-          </span>
+          <span className="auth-badge">KNOWLEDGE AI</span>
         </div>
         <div className="auth-story-main">
           <div className="story-eyebrow">PERSONAL KNOWLEDGE WORKSPACE</div>
@@ -103,21 +89,21 @@ export function AuthPage({ mode }: AuthPageProps) {
           <p>上传笔记、手册与论文，知问会检索你的资料，逐字给出回答，并把每一句结论标回原文。</p>
           <div className="story-features">
             <div>
-              <BookOpen size={16} />
+              <BookOutlined />
               <span>
                 <b>个人知识库</b>
                 资料仅你可见
               </span>
             </div>
             <div>
-              <MessageSquare size={16} />
+              <MessageOutlined />
               <span>
                 <b>流式回答</b>
                 SSE 逐字呈现
               </span>
             </div>
             <div>
-              <ShieldCheck size={16} />
+              <SafetyCertificateOutlined />
               <span>
                 <b>可溯源引用</b>
                 点开即看原文
@@ -149,72 +135,95 @@ export function AuthPage({ mode }: AuthPageProps) {
             </p>
           </div>
 
-          <form onSubmit={submit} noValidate>
+          <Form
+            form={form}
+            layout="vertical"
+            requiredMark={false}
+            onFinish={submit}
+            autoComplete="off"
+            className="auth-form"
+          >
             {!isLogin && (
-              <label className="auth-field">
-                <span>昵称</span>
-                <div className="auth-input">
-                  <User size={15} />
-                  <input
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    placeholder="怎么称呼你？"
-                    autoComplete="name"
-                    maxLength={50}
-                  />
-                </div>
-              </label>
+              <Form.Item
+                label="昵称"
+                name="name"
+                rules={[{ required: true, message: '请填写你的昵称' }]}
+              >
+                <Input
+                  size="large"
+                  prefix={<UserOutlined />}
+                  placeholder="怎么称呼你？"
+                  maxLength={50}
+                />
+              </Form.Item>
             )}
-            <label className="auth-field">
-              <span>邮箱</span>
-              <div className="auth-input">
-                <Mail size={15} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                />
-              </div>
-            </label>
-            <label className="auth-field">
-              <span>密码</span>
-              <div className="auth-input">
-                <Lock size={15} />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder={isLogin ? '输入密码' : '至少 8 位，包含字母和数字'}
-                  autoComplete={isLogin ? 'current-password' : 'new-password'}
-                  maxLength={72}
-                />
-                <button
-                  type="button"
-                  className="auth-eye"
-                  onClick={() => setShowPassword((value) => !value)}
-                  aria-label={showPassword ? '隐藏密码' : '显示密码'}
-                >
-                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              </div>
-            </label>
+            <Form.Item
+              label="邮箱"
+              name="email"
+              rules={[
+                { required: true, message: '请输入邮箱' },
+                { type: 'email', message: '请输入有效的邮箱地址' },
+              ]}
+            >
+              <Input
+                size="large"
+                prefix={<MailOutlined />}
+                placeholder="you@example.com"
+                autoComplete="email"
+              />
+            </Form.Item>
+            <Form.Item
+              label="密码"
+              name="password"
+              rules={[
+                { required: true, message: '请输入密码' },
+                { min: 8, message: '密码至少 8 位' },
+                ...(isLogin
+                  ? []
+                  : [
+                      {
+                        pattern: /^(?=.*[A-Za-z])(?=.*\d).+$/,
+                        message: '密码需同时包含字母和数字',
+                      },
+                    ]),
+              ]}
+            >
+              <Input.Password
+                size="large"
+                prefix={<LockOutlined />}
+                placeholder={isLogin ? '输入密码' : '至少 8 位，包含字母和数字'}
+                autoComplete={isLogin ? 'current-password' : 'new-password'}
+                maxLength={72}
+              />
+            </Form.Item>
 
-            {(localError || error) && <div className="auth-error">{localError || error}</div>}
+            {error && <Alert className="auth-alert" type="error" showIcon message={error} />}
 
-            <button type="submit" className="auth-submit" disabled={loading}>
-              {loading ? '请稍候…' : isLogin ? '登录' : '创建账号'}
-              {!loading && <ArrowRight size={15} />}
-            </button>
-          </form>
+            <Button
+              type="primary"
+              htmlType="submit"
+              size="large"
+              block
+              loading={loading}
+              className="auth-submit"
+            >
+              {isLogin ? '登录' : '创建账号'}
+              {!loading && <ArrowRightOutlined />}
+            </Button>
+          </Form>
 
           {isLogin && (
-            <button type="button" className="demo-login" onClick={demoLogin} disabled={loading}>
-              <Sparkles size={13} />
+            <Button
+              type="dashed"
+              block
+              className="demo-login"
+              icon={<ExperimentOutlined />}
+              onClick={demoLogin}
+              disabled={loading}
+            >
               体验演示账号
-              <span>demo@zhiwen.app · Demo1234</span>
-            </button>
+              <span className="demo-account">demo@zhiwen.app · Demo1234</span>
+            </Button>
           )}
 
           <div className="auth-switch">

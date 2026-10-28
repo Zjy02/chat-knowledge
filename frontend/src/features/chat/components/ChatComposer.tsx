@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { ArrowUp, BookOpen, Paperclip, Square } from 'lucide-react';
+import { Button, Input, Switch, Tooltip } from 'antd';
+import { ArrowUpOutlined, BookOutlined, PaperClipOutlined, StopOutlined } from '@ant-design/icons';
 
 interface ChatComposerProps {
   value: string;
@@ -24,23 +24,15 @@ export function ChatComposer({
   useKnowledge,
   disabled = false,
 }: ChatComposerProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const element = textareaRef.current;
-    if (!element) return;
-    element.style.height = 'auto';
-    element.style.height = `${Math.min(element.scrollHeight, 150)}px`;
-  }, [value]);
-
   const canSend = value.trim().length > 0 && !streaming && !disabled;
 
   return (
     <div className="composer-wrap">
       <div className="composer">
-        <textarea
-          ref={textareaRef}
-          rows={1}
+        <Input.TextArea
+          className="composer-textarea"
+          variant="borderless"
+          autoSize={{ minRows: 1, maxRows: 6 }}
           value={value}
           maxLength={2000}
           placeholder="向你的知识库提问…"
@@ -55,46 +47,50 @@ export function ChatComposer({
         />
         <div className="composer-bar">
           <div className="composer-tools">
-            <button
-              type="button"
-              className="comp-btn"
-              onClick={onAttach}
-              title="上传资料到知识库"
-              aria-label="上传资料"
-            >
-              <Paperclip size={13} />
-            </button>
+            <Tooltip title="上传资料到知识库">
+              <Button
+                type="text"
+                size="small"
+                icon={<PaperClipOutlined />}
+                onClick={onAttach}
+                aria-label="上传资料"
+              />
+            </Tooltip>
             <div className="comp-divider" />
-            <button
-              type="button"
-              className={`comp-btn ${useKnowledge ? 'on' : ''}`}
-              onClick={onToggleKnowledge}
-              title={useKnowledge ? '正在使用知识库回答' : '当前为通用对话'}
-            >
-              <BookOpen size={12} />
+            <span className={`kb-toggle ${useKnowledge ? 'on' : ''}`}>
+              <BookOutlined />
               知识库
-              <span className={`tiny-state ${useKnowledge ? 'on' : ''}`}>
-                {useKnowledge ? 'ON' : 'OFF'}
-              </span>
-            </button>
+              <Switch
+                size="small"
+                checked={useKnowledge}
+                onChange={onToggleKnowledge}
+                aria-label="知识库增强"
+                title={useKnowledge ? '正在使用知识库回答' : '当前为通用对话'}
+              />
+            </span>
           </div>
           <div className="send-area">
             <span className="char-count">{value.length} / 2000</span>
             {streaming ? (
-              <button type="button" className="stop-btn" onClick={onStop} aria-label="停止生成">
-                <Square size={11} fill="currentColor" />
+              <Button
+                danger
+                icon={<StopOutlined />}
+                className="stop-btn"
+                onClick={onStop}
+                aria-label="停止生成"
+              >
                 停止
-              </button>
+              </Button>
             ) : (
-              <button
-                type="button"
+              <Button
+                type="primary"
+                shape="circle"
                 className="send-btn"
+                icon={<ArrowUpOutlined />}
                 onClick={onSend}
                 disabled={!canSend}
                 aria-label="发送"
-              >
-                <ArrowUp size={16} />
-              </button>
+              />
             )}
           </div>
         </div>

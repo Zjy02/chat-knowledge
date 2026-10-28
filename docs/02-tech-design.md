@@ -11,8 +11,8 @@
 | 前端框架 | React 18 + TypeScript 5 | 需求指定；函数组件 + Hooks |
 | 构建 | Vite 5 | 快速冷启动，产物由 Nginx 托管 |
 | 路由 | React Router 6 | `/login`、`/chat/:id`、`/knowledge` |
-| 状态 | Zustand 4 | 轻量全局状态（会话、用户、Toast）；页面状态留在组件 |
-| 样式 | 原生 CSS + Design Tokens | 与高保真原型 1:1，无 UI 框架约束；支持响应式 |
+| 状态 | Redux Toolkit 2 + React Redux 9 | 认证、会话、知识库、UI 状态统一进 store；页面局部状态留在组件 |
+| 组件与样式 | Ant Design 5 + Design Tokens | 表单、弹窗、表格、上传、开关等使用 AntD；保留品牌 CSS 与响应式布局 |
 | Markdown | react-markdown + remark-gfm + rehype-highlight | 表格、任务列表、代码高亮；默认不渲染原始 HTML，防 XSS |
 | 图标 | lucide-react | 线性图标风格统一 |
 | 流式通信 | **SSE**（`fetch` + ReadableStream） | 见 2.1 |
@@ -50,7 +50,7 @@
 │ Browser                                                      │
 │ React 18 + TS   ── fetch/SSE ──┐                            │
 │  ├─ Auth / Chat / Knowledge    │                            │
-│  └─ Zustand + React Router     │                            │
+│  └─ Redux Toolkit + Router     │                            │
 └────────────────────────────────┼────────────────────────────┘
                                  │ HTTPS
                         ┌────────▼────────┐
@@ -362,7 +362,7 @@ chat-knowledge/
 │   │   ├── components/       # shared
 │   │   ├── features/         # auth, chat, knowledge
 │   │   ├── hooks/
-│   │   ├── stores/
+│   │   ├── store/
 │   │   ├── styles/
 │   │   └── types/
 │   └── package.json

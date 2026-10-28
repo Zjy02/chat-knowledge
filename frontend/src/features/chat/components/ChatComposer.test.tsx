@@ -37,7 +37,7 @@ describe('ChatComposer', () => {
 
   it('toggles knowledge mode and opens the file picker', async () => {
     const props = setup();
-    await userEvent.click(screen.getByTitle('正在使用知识库回答'));
+    await userEvent.click(screen.getByRole('switch', { name: '知识库增强' }));
     expect(props.onToggleKnowledge).toHaveBeenCalledTimes(1);
     await userEvent.click(screen.getByRole('button', { name: '上传资料' }));
     expect(props.onAttach).toHaveBeenCalledTimes(1);

@@ -1,61 +1,82 @@
-import { useEffect, useRef, useState } from 'react';
-import { FileText, ShieldCheck, UploadCloud, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Alert, Button, Progress, Upload } from 'antd';
+import type { UploadFile, UploadProps } from 'antd';
+import {
+  DeleteOutlined,
+  FileTextOutlined,
+  InboxOutlined,
+  SafetyCertificateOutlined,
+} from '@ant-design/icons';
 import { Modal } from '../../../components/Modal';
 import { knowledgeApi } from '../../../api';
+import { useAppDispatch } from '../../../store/hooks';
+import { fetchKnowledge } from '../../../store/slices/knowledgeSlice';
+import { notify } from '../../../store/notify';
 import { formatBytes } from '../../../utils/format';
-import { toast } from '../../../stores/toastStore';
-import type { DocumentItem } from '../../../types';
 
 interface UploadModalProps {
   open: boolean;
   onClose: () => void;
-  onUploaded: (document: DocumentItem) => void;
 }
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const ACCEPTED = ['.pdf', '.docx', '.md', '.txt'];
 
-export function UploadModal({ open, onClose, onUploaded }: UploadModalProps) {
-  const [file, setFile] = useState<File | null>(null);
-  const [dragActive, setDragActive] = useState(false);
+export function UploadModal({ open, onClose }: UploadModalProps) {
+  const dispatch = useAppDispatch();
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) {
-      setFile(null);
+      setFileList([]);
       setProgress(0);
       setUploading(false);
       setError('');
     }
   }, [open]);
 
-  const pick = (candidate: File | undefined) => {
-    if (!candidate) return;
-    const ext = candidate.name.slice(candidate.name.lastIndexOf('.')).toLowerCase();
+  const validate = (file: File) => {
+    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
     if (!ACCEPTED.includes(ext)) {
       setError('仅支持 PDF、DOCX、Markdown、TXT 文件');
-      return;
+      return false;
     }
-    if (candidate.size > MAX_BYTES) {
+    if (file.size > MAX_BYTES) {
       setError('文件超过 10MB 限制');
-      return;
+      return false;
     }
     setError('');
-    setFile(candidate);
+    return true;
+  };
+
+  const beforeUpload: UploadProps['beforeUpload'] = (file) => {
+    if (!validate(file)) return Upload.LIST_IGNORE;
+    setFileList([
+      {
+        uid: file.uid,
+        name: file.name,
+        status: 'done',
+        size: file.size,
+        type: file.type,
+        originFileObj: file,
+      },
+    ]);
     setProgress(0);
+    return false;
   };
 
   const upload = async () => {
-    if (!file || uploading) return;
+    const raw = fileList[0]?.originFileObj;
+    if (!raw || uploading) return;
     setUploading(true);
     setError('');
     try {
-      const document = await knowledgeApi.upload(file, setProgress);
-      toast('已加入解析队列，完成后会自动出现在列表中', 'success');
-      onUploaded(document);
+      await knowledgeApi.upload(raw, setProgress);
+      await dispatch(fetchKnowledge()).unwrap();
+      notify.success('已加入解析队列，完成后会自动出现在列表中');
       onClose();
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : '上传失败');
@@ -63,6 +84,8 @@ export function UploadModal({ open, onClose, onUploaded }: UploadModalProps) {
       setUploading(false);
     }
   };
+
+  const selected = fileList[0];
 
   return (
     <Modal
@@ -74,97 +97,71 @@ export function UploadModal({ open, onClose, onUploaded }: UploadModalProps) {
       footer={
         <>
           <span className="privacy-note">
-            <ShieldCheck size={11} /> 仅用于你的个人知识库
+            <SafetyCertificateOutlined /> 仅用于你的个人知识库
           </span>
           <div className="modal-actions">
-            <button type="button" className="btn btn-ghost" onClick={onClose} disabled={uploading}>
+            <Button onClick={onClose} disabled={uploading}>
               取消
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={upload}
-              disabled={!file || uploading}
-            >
-              {uploading ? '上传中…' : '开始解析'}
-            </button>
+            </Button>
+            <Button type="primary" onClick={upload} loading={uploading} disabled={!selected}>
+              开始解析
+            </Button>
           </div>
         </>
       }
     >
-      <div
-        className={`dropzone ${dragActive ? 'drag' : ''}`}
-        onClick={() => inputRef.current?.click()}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setDragActive(true);
-        }}
-        onDragLeave={() => setDragActive(false)}
-        onDrop={(event) => {
-          event.preventDefault();
-          setDragActive(false);
-          pick(event.dataTransfer.files?.[0]);
-        }}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') inputRef.current?.click();
-        }}
+      <Upload.Dragger
+        accept={ACCEPTED.join(',')}
+        multiple={false}
+        maxCount={1}
+        fileList={fileList}
+        showUploadList={false}
+        beforeUpload={beforeUpload}
+        onRemove={() => setFileList([])}
+        className="upload-dragger"
       >
-        <div className="drop-icon">
-          <UploadCloud size={21} />
-        </div>
-        <b>点击选择，或拖拽文件到这里</b>
-        <span>
+        <p className="ant-upload-drag-icon">
+          <InboxOutlined />
+        </p>
+        <p className="ant-upload-text">点击选择，或拖拽文件到这里</p>
+        <p className="ant-upload-hint">
           单个文件不超过 10 MB
           <br />
           上传后会自动解析、切分并建立索引
-        </span>
+        </p>
         <div className="formats">
           <em>.pdf</em>
           <em>.docx</em>
           <em>.md</em>
           <em>.txt</em>
         </div>
-      </div>
-      <input
-        ref={inputRef}
-        type="file"
-        hidden
-        accept={ACCEPTED.join(',')}
-        onChange={(event) => pick(event.target.files?.[0])}
-      />
+      </Upload.Dragger>
 
-      {file && (
+      {selected && (
         <div className="file-picked">
           <div className="fp-ico">
-            <FileText size={14} />
-            <span>{file.name.split('.').pop()?.toUpperCase()}</span>
+            <FileTextOutlined />
+            <span>{selected.name.split('.').pop()?.toUpperCase()}</span>
           </div>
           <div className="fp-main">
-            <b>{file.name}</b>
+            <b>{selected.name}</b>
             <span>
-              {formatBytes(file.size)} · {uploading ? `上传中 ${progress}%` : '已选择'}
+              {formatBytes(selected.size || 0)} · {uploading ? `上传中 ${progress}%` : '已选择'}
             </span>
-            {uploading && (
-              <div className="progress">
-                <i style={{ width: `${progress}%` }} />
-              </div>
-            )}
+            {uploading && <Progress percent={progress} showInfo={false} size="small" />}
           </div>
           {!uploading && (
-            <button
-              type="button"
-              className="icon-btn"
-              onClick={() => setFile(null)}
+            <Button
+              type="text"
+              size="small"
+              icon={<DeleteOutlined />}
+              onClick={() => setFileList([])}
               aria-label="移除文件"
-            >
-              <X size={13} />
-            </button>
+            />
           )}
         </div>
       )}
-      {error && <div className="upload-error">{error}</div>}
+      {error && <Alert className="upload-error" type="error" showIcon message={error} />}
       <div className="upload-note">扫描版 PDF 无法提取文字，请先 OCR，或上传可复制文本的版本。</div>
     </Modal>
   );
