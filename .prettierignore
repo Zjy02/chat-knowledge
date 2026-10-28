@@ -1,0 +1,10 @@
+node_modules
+frontend/node_modules
+frontend/dist
+frontend/coverage
+frontend/playwright-report
+frontend/test-results
+backend
+docs
+package-lock.json
+frontend/package-lock.json

@@ -1,0 +1,64 @@
+[project]
+name = "chat-knowledge-api"
+version = "1.0.0"
+description = "知问 - AI knowledge chat backend"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115.0,<1.0.0",
+  "uvicorn[standard]>=0.32.0,<1.0.0",
+  "sqlalchemy[asyncio]>=2.0.36,<3.0.0",
+  "aiomysql>=0.2.0,<1.0.0",
+  "aiosqlite>=0.20.0,<1.0.0",
+  "alembic>=1.14.0,<2.0.0",
+  "pydantic>=2.10.0,<3.0.0",
+  "pydantic-settings>=2.6.0,<3.0.0",
+  "email-validator>=2.2.0,<3.0.0",
+  "PyJWT>=2.10.0,<3.0.0",
+  "bcrypt>=4.2.0,<6.0.0",
+  "python-multipart>=0.0.17,<1.0.0",
+  "httpx>=0.28.0,<1.0.0",
+  "pypdf>=5.1.0,<7.0.0",
+  "python-docx>=1.1.2,<2.0.0",
+  "jieba>=0.42.1,<1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.0,<9.0.0",
+  "pytest-asyncio>=0.24.0,<1.0.0",
+  "pytest-cov>=6.0.0,<7.0.0",
+  "asgi-lifespan>=2.1.0,<3.0.0",
+  "ruff>=0.8.0,<1.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-q --cov=app --cov-report=term-missing --cov-fail-under=80"
+filterwarnings = [
+  "ignore::DeprecationWarning:jieba.*",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/scripts/*", "app/main.py"]
+
+[tool.ruff]
+line-length = 140
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "RUF", "SIM"]
+ignore = [
+  "B008",   # FastAPI Depends() in defaults is the framework convention
+  "RUF012", # SQLAlchemy declarative class options are intentionally mutable
+  "RUF001", "RUF002", "RUF003", # Chinese punctuation is intentional
+  "SIM117", # nested async contexts are clearer around httpx streams
+]

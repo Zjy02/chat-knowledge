@@ -1,0 +1,26 @@
+Metadata-Version: 2.4
+Name: chat-knowledge-api
+Version: 1.0.0
+Summary: 知问 - AI knowledge chat backend
+Requires-Python: >=3.11
+Requires-Dist: fastapi<1.0.0,>=0.115.0
+Requires-Dist: uvicorn[standard]<1.0.0,>=0.32.0
+Requires-Dist: sqlalchemy[asyncio]<3.0.0,>=2.0.36
+Requires-Dist: aiomysql<1.0.0,>=0.2.0
+Requires-Dist: aiosqlite<1.0.0,>=0.20.0
+Requires-Dist: alembic<2.0.0,>=1.14.0
+Requires-Dist: pydantic<3.0.0,>=2.10.0
+Requires-Dist: pydantic-settings<3.0.0,>=2.6.0
+Requires-Dist: email-validator<3.0.0,>=2.2.0
+Requires-Dist: PyJWT<3.0.0,>=2.10.0
+Requires-Dist: bcrypt<6.0.0,>=4.2.0
+Requires-Dist: python-multipart<1.0.0,>=0.0.17
+Requires-Dist: httpx<1.0.0,>=0.28.0
+Requires-Dist: pypdf<7.0.0,>=5.1.0
+Requires-Dist: python-docx<2.0.0,>=1.1.2
+Requires-Dist: jieba<1.0.0,>=0.42.1
+Provides-Extra: dev
+Requires-Dist: pytest<9.0.0,>=8.3.0; extra == "dev"
+Requires-Dist: pytest-asyncio<1.0.0,>=0.24.0; extra == "dev"
+Requires-Dist: pytest-cov<7.0.0,>=6.0.0; extra == "dev"
+Requires-Dist: asgi-lifespan<3.0.0,>=2.1.0; extra == "dev"

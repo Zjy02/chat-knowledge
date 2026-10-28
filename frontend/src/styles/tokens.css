@@ -1,0 +1,259 @@
+:root {
+  --paper: #f2eee6;
+  --paper-2: #ece7dc;
+  --surface: #fbf9f4;
+  --surface-raised: #fffdf9;
+  --ink: #1d1e1b;
+  --ink-2: #3d3d37;
+  --muted: #7c776c;
+  --faint: #a7a196;
+  --line: #e3dccf;
+  --line-strong: #d5ccbb;
+  --accent: #c14b2c;
+  --accent-deep: #9f371d;
+  --accent-soft: #f6e4dc;
+  --jade: #2f6b58;
+  --jade-soft: #e5efe9;
+  --gold: #a97d3b;
+  --danger: #a54027;
+  --shadow-sm: 0 1px 2px rgba(45, 38, 28, 0.05), 0 4px 12px rgba(45, 38, 28, 0.04);
+  --shadow-md: 0 8px 30px rgba(45, 38, 28, 0.1), 0 2px 6px rgba(45, 38, 28, 0.05);
+  --shadow-lg: 0 24px 70px rgba(35, 29, 20, 0.18);
+  --serif: 'Songti SC', 'Noto Serif SC', STSong, Georgia, serif;
+  --sans:
+    'SF Pro Text', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+svg {
+  display: block;
+  flex: 0 0 auto;
+}
+
+::selection {
+  color: var(--ink);
+  background: #ecc9ba;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(193, 75, 44, 0.55);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d8cfbf;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--muted);
+  border-radius: 8px;
+  transition: 0.15s ease;
+}
+
+.icon-btn:hover {
+  color: var(--ink);
+  background: var(--paper-2);
+}
+
+.icon-btn.tiny {
+  width: 24px;
+  height: 24px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: 0.16s ease;
+}
+
+.btn-primary {
+  color: #fff;
+  background: var(--ink);
+}
+
+.btn-primary:hover {
+  background: #34352f;
+}
+
+.btn-ghost {
+  color: var(--muted);
+  background: #fffdf8;
+  border: 1px solid var(--line);
+}
+
+.btn-ghost:hover {
+  color: var(--ink-2);
+  border-color: var(--line-strong);
+}
+
+.btn-danger {
+  color: #fff;
+  background: var(--danger);
+}
+
+.btn-danger:hover {
+  background: #8d2f19;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.text-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  color: var(--ink);
+  background: #fbf8f1;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+}
+
+.text-input:focus {
+  border-color: #c9b89f;
+  box-shadow: 0 0 0 3px rgba(193, 75, 44, 0.06);
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes blink {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
